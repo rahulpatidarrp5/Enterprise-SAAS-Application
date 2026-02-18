@@ -1,12 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Layout } from './components/layout/Layout';
 import { DashboardOverview } from './components/dashboard/DashboardOverview';
+import { Analytics } from './pages/Analytics';
+import { UsersPage } from './pages/Users';
+import { Reports } from './pages/Reports';
+import { SettingsPage } from './pages/Settings';
 import { useAuthStore } from './store/useAuthStore';
 import { useDashboardStore } from './store/useDashboardStore';
+
+type PageType = 'dashboard' | 'analytics' | 'users' | 'reports' | 'settings';
 
 function App() {
   const { isAuthenticated, user } = useAuthStore();
   const { fetchNotifications, fetchActivities } = useDashboardStore();
+  const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -14,6 +21,29 @@ function App() {
       fetchActivities();
     }
   }, [isAuthenticated, fetchNotifications, fetchActivities]);
+
+  useEffect(() => {
+    // Handle navigation based on current path
+    const path = window.location.pathname.slice(1) || 'dashboard';
+    if (['dashboard', 'analytics', 'users', 'reports', 'settings'].includes(path)) {
+      setCurrentPage(path as PageType);
+    }
+  }, []);
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'analytics':
+        return <Analytics />;
+      case 'users':
+        return <UsersPage />;
+      case 'reports':
+        return <Reports />;
+      case 'settings':
+        return <SettingsPage />;
+      default:
+        return <DashboardOverview />;
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -84,18 +114,7 @@ function App() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {user?.name}!
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Here's what's happening with your business today.
-          </p>
-        </div>
-        
-        <DashboardOverview />
-      </div>
+      {renderPage()}
     </Layout>
   );
 }
